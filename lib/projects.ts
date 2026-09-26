@@ -5,6 +5,9 @@ import matter from "gray-matter";
 const PROJECTS_DIR = path.join(process.cwd(), "content/projects");
 const MANIFEST_PATH = path.join(process.cwd(), "lib/generated/thumbs.json");
 
+/** Prefixes public/ asset paths with basePath; next/image and three.js loaders don't add it. */
+export const asset = (src: string) => `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${src}`;
+
 export type ProjectFrontmatter = {
   title: string;
   year: number;
@@ -39,7 +42,8 @@ async function readManifest(): Promise<ThumbManifest | null> {
 }
 
 export async function getAtlas() {
-  return (await readManifest())?.atlas ?? null;
+  const atlas = (await readManifest())?.atlas;
+  return atlas ? { ...atlas, src: asset(atlas.src) } : null;
 }
 
 async function readProject(file: string, manifest: ThumbManifest | null): Promise<Project> {
@@ -52,10 +56,10 @@ async function readProject(file: string, manifest: ThumbManifest | null): Promis
     title: fm.title,
     year: Number(fm.year),
     tags: fm.tags ?? [],
-    thumbnail: fm.thumbnail,
+    thumbnail: asset(fm.thumbnail),
     order: Number(fm.order ?? 999),
     summary: fm.summary,
-    thumb: generated?.thumb ?? fm.thumbnail,
+    thumb: asset(generated?.thumb ?? fm.thumbnail),
     blurDataURL: generated?.blurDataURL,
     atlasIndex: generated?.atlasIndex ?? -1,
     content,
